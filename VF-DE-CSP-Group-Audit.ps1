@@ -1,18 +1,40 @@
-Get-MgUser -UserId "6d60d267-b4ca-4d71-a9fe-ad19e11b66ac" # Get the user
-$user = Get-MgUser -UserId "6d60d267-b4ca-4d71-a9fe-ad19e11b66ac"
 
-# Get the user type
-$userType = $user.UserType
+# Get all groups
+$groups = Get-MgGroup -All
 
-# Output the user type
-Write-Host "User type: $userType"# Get the user
-$user = Get-MgUser -UserId "6d60d267-b4ca-4d71-a9fe-ad19e11b66ac" -Select "Id, UserType"
+# Print out the total number of groups in the tenant
+Write-Host "Total number of groups in the tenant: $($groups.Count)"
 
-# Get the user type
-$userType = $user.UserType
+# Initialize an empty array to store all members
+$allMembers = @()
 
-# Output the user type
-Write-Host "User type: $userType"
+# For each group
+foreach ($group in $groups) {
+    # Output the group ID and display name
+    $Group_ID = $group.Id
+    $Group_Name = $group.DisplayName
+    Write-Host "Group ID: $Group_ID, Display Name: $Group_Name"
+
+    # Get the members of the group
+    $members = Get-MgGroupMember -GroupId $group.Id -All | ForEach-Object {
+        $user = Get-MgUser -UserId $_.Id
+        [PSCustomObject]@{
+            Name = $user.DisplayName
+            Id = $user.Id
+            Group = $Group_Name
+        }
+    }
+
+    # Add the members to the array
+    $allMembers += $members
+
+    # Output the total number of members in the group
+    $totalMembers = $members.Count
+    Write-Host "Total number of members in the group: $totalMembers"
+}
+
+# Export the list of all members with their group to a CSV file
+$allMembers | Export-Csv -Path "C:\AllGroupMembers.csv" -NoTypeInformation
 
 
 
