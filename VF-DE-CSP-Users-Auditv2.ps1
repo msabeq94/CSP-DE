@@ -1,8 +1,7 @@
 # Connect to Microsoft Graph API
 Connect-MgGraph -Scopes "AuditLog.Read.All", "User.Read.All", "Directory.Read.All", "UserAuthenticationMethod.Read.All", "UserAuthenticationMethod.ReadWrite.All", "User.ReadWrite","Organization.Read.All"
-
 # Get all users
-$users = Get-MgUser -All -Select "Id, UserType, DisplayName, UserPrincipalName, Mail,"
+$users = Get-MgUser -All -Select "Id, UserType, DisplayName, UserPrincipalName, Mail, AccountEnabled"
 # Get all MFA registration details
 $mfaRegistrationDetails = Get-MgReportAuthenticationMethodUserRegistrationDetail -All
 
@@ -16,7 +15,8 @@ foreach ($user in $users) {
     $userName = $user.DisplayName
     $userPrincipalName = $user.UserPrincipalName
     $userType = $user.UserType
-Write-Host "Checking user: $userName"
+    $userstatus = $user.AccountEnabled
+
     # Get the sign-in logs for the user
 # Get the sign-in activities
 $signInActivities = Get-MgBetaAuditLogSignIn -Filter "UserId eq '$userId'" -All | Sort-Object CreatedDateTime -Descending
@@ -102,6 +102,7 @@ $userMfaRegistrationDetails = $mfaRegistrationDetails | Where-Object { $_.UserPr
         FullName = $userName
         UserId = $userId
         UserType = $userType
+        Userstatus = $userstatus
         UserPrincipalName = $userPrincipalName
         IsMfaCapable = $IsMfaCapable
         IsMfaRegistered =  $IsMfaRegistered 
@@ -120,7 +121,7 @@ $userMfaRegistrationDetails = $mfaRegistrationDetails | Where-Object { $_.UserPr
 }
 
 # Export the user data to a CSV file
-$userData | Select-Object FullName, UserId, UserType, UserPrincipalName, IsMfaCapable,IsMfaRegistered,lastInteractiveSignInDate ,daysSinceLastInteractiveSignIn,lastNonInteractiveSignInDate,daysSinceLastNonInteractiveSignIn, Groups, DirectoryRoles, Licenses, AlternativeEmail | Export-Csv -Path 'C:\user_all11.csv' -NoTypeInformation
+$userData | Select-Object FullName, UserId, UserType,Userstatus,UserPrincipalName, IsMfaCapable,IsMfaRegistered,lastInteractiveSignInDate ,daysSinceLastInteractiveSignIn,lastNonInteractiveSignInDate,daysSinceLastNonInteractiveSignIn, Groups, DirectoryRoles, Licenses, AlternativeEmail | Export-Csv -Path 'C:\user_all11.csv' -NoTypeInformation
 
 # Disconnect from Microsoft Graph API
 Disconnect-MgGraph
